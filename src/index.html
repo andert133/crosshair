@@ -1083,7 +1083,7 @@
 
     // Load presets from localStorage
     function loadUserPresets() {
-        const stored = localStorage.getItem('user_presets');
+        const stored = localStorage.getItem('user_presets_v1');
         if (stored) {
             try {
                 userPresets = JSON.parse(stored);
@@ -1091,21 +1091,15 @@
                 userPresets = [];
             }
         } else {
-            // Default presets on first run
-            userPresets = [
-                { name: "Точка (Голубой)", code: "00ffff0401006464037d" },
-                { name: "Крестик (Зеленый)", code: "00ff0002080464640379" },
-                { name: "T-образный (Желтый)", code: "ffff0002060364640371" },
-                { name: "Круг (Розовый)", code: "ff00ff02030564640679" },
-                { name: "Снайпер (Красный)", code: "ff00000101006464087f" }
-            ];
+            // Start with an empty list on first run
+            userPresets = [];
             saveUserPresets();
         }
         renderPresetsList();
     }
 
     function saveUserPresets() {
-        localStorage.setItem('user_presets', JSON.stringify(userPresets));
+        localStorage.setItem('user_presets_v1', JSON.stringify(userPresets));
     }
 
     // Render presets list with mini previews
