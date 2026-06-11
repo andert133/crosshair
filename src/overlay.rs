@@ -284,7 +284,7 @@ unsafe extern "system" fn overlay_wnd_proc(
             if settings.enabled {
                 let color_val = parse_hex_color(&settings.color);
                 let brush = CreateSolidBrush(color_val);
-                let outline_brush = CreateSolidBrush(0x00000000); // Black outline brush
+                let outline_brush = CreateSolidBrush(0x00010101); // Near-black outline brush (avoids ColorKey transparency)
 
                 let cx = (rect.right - rect.left) / 2;
                 let cy = (rect.bottom - rect.top) / 2;
