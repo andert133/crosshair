@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель управления прицелом</title>
+    <style>
+        :root {
+            --bg-color: #0b0c10;
+            --card-bg: rgba(31, 40, 51, 0.6);
+            --accent-color: #00f0ff;
+            --accent-glow: rgba(0, 240, 255, 0.4);
+            --text-color: #c5c6c7;
+            --text-highlight: #ffffff;
+            --border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 240, 255, 0.03) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(255, 0, 128, 0.02) 0%, transparent 40%);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 25px;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 240, 255, 0.05);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        h1 {
+            grid-column: 1 / -1;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-highlight);
+            text-align: center;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--accent-glow);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        .settings-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .control-value {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        /* Sliders */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+            transition: background 0.3s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            box-shadow: 0 0 8px var(--accent-glow);
+            transition: transform 0.1s, background-color 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            background: #ffffff;
+        }
+
+        /* Colors Section */
+        .color-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .presets {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .preset-color {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .preset-color:hover {
+            transform: scale(1.15);
+        }
+
+        .preset-color.active {
+            border-color: #ffffff;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            background: none;
+            outline: none;
+        }
+
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        input[type="color"]::-webkit-color-swatch {
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        /* Checkboxes & Switches */
+        .switch-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .switch-label {
+            font-size: 14px;
+            color: var(--text-highlight);
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 22px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255,255,255,0.1);
+            transition: .3s;
+            border-radius: 22px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent-color);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+
+        /* Dropdowns */
+        select {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-highlight);
+            padding: 8px 12px;
+            outline: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        select:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 5px var(--accent-glow);
+        }
+
+        /* Hotkey Section */
+        .hotkey-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin-top: 5px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            background: rgba(255,255,255,0.04);
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            user-select: none;
+        }
+
+        .checkbox-label input {
+            accent-color: var(--accent-color);
+        }
+
+        .checkbox-label:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+        /* Preview Panel */
+        .preview-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 20px;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .preview-title {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .preview-box {
+            width: 200px;
+            height: 200px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: #121214;
+            /* Chessboard grid background representing transparency */
+            background-image: 
+                linear-gradient(45deg, #1b1b1f 25%, transparent 25%), 
+                linear-gradient(-45deg, #1b1b1f 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #1b1b1f 75%), 
+                linear-gradient(-45deg, transparent 75%, #1b1b1f 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+        }
+
+        #preview-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Buttons */
+        .btn {
+            background: transparent;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            width: 100%;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.05);
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            background: var(--accent-color);
+            color: #000;
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .btn-exit {
+            border-color: #ff3b30;
+            color: #ff3b30;
+            box-shadow: 0 0 10px rgba(255, 59, 48, 0.05);
+            margin-top: 5px;
+        }
+
+        .btn-exit:hover {
+            background: #ff3b30;
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(255, 59, 48, 0.4);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 20px;
+            margin-bottom: 5px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #4cd964;
+            box-shadow: 0 0 6px #4cd964;
+        }
+
+        .status-dot.disabled {
+            background-color: #ff3b30;
+            box-shadow: 0 0 6px #ff3b30;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Настройка Прицела</h1>
+
+    <!-- Left: Settings Panel -->
+    <div class="settings-panel">
+        <!-- Color Selection -->
+        <div class="control-group">
+            <div class="control-label">Цвет прицела <span class="control-value" id="color-val">#00ffff</span></div>
+            <div class="color-row">
+                <input type="color" id="color" value="#00ffff">
+                <div class="presets">
+                    <div class="preset-color active" style="background-color: #00ffff;" data-color="#00ffff"></div>
+                    <div class="preset-color" style="background-color: #00ff00;" data-color="#00ff00"></div>
+                    <div class="preset-color" style="background-color: #ff0000;" data-color="#ff0000"></div>
+                    <div class="preset-color" style="background-color: #ffff00;" data-color="#ffff00"></div>
+                    <div class="preset-color" style="background-color: #ff00ff;" data-color="#ff00ff"></div>
+                    <div class="preset-color" style="background-color: #ffffff;" data-color="#ffffff"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Line Width -->
+        <div class="control-group">
+            <div class="control-label">Толщина линий <span class="control-value" id="line_width-val">2 px</span></div>
+            <input type="range" id="line_width" min="1" max="10" value="2">
+        </div>
+
+        <!-- Line Length -->
+        <div class="control-group">
+            <div class="control-label">Длина линий <span class="control-value" id="line_length-val">8 px</span></div>
+            <input type="range" id="line_length" min="1" max="40" value="8">
+        </div>
+
+        <!-- Gap -->
+        <div class="control-group">
+            <div class="control-label">Зазор по центру <span class="control-value" id="gap-val">4 px</span></div>
+            <input type="range" id="gap" min="0" max="30" value="4">
+        </div>
+
+        <!-- Offset X -->
+        <div class="control-group">
+            <div class="control-label">Смещение X <span class="control-value" id="offset_x-val">0 px</span></div>
+            <input type="range" id="offset_x" min="-100" max="100" value="0">
+        </div>
+
+        <!-- Offset Y -->
+        <div class="control-group">
+            <div class="control-label">Смещение Y <span class="control-value" id="offset_y-val">0 px</span></div>
+            <input type="range" id="offset_y" min="-100" max="100" value="0">
+        </div>
+
+        <!-- Center Dot Toggle -->
+        <div class="switch-row">
+            <span class="switch-label">Точка по центру</span>
+            <label class="switch">
+                <input type="checkbox" id="dot_enabled">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <!-- Dot Size -->
+        <div class="control-group" id="dot-size-container" style="display: none;">
+            <div class="control-label">Размер точки <span class="control-value" id="dot_size-val">3 px</span></div>
+            <input type="range" id="dot_size" min="1" max="15" value="3">
+        </div>
+
+        <!-- Hotkey Modifier -->
+        <div class="control-group">
+            <div class="control-label">Хоткей для вкл/выкл прицела</div>
+            <div class="hotkey-container">
+                <label class="checkbox-label"><input type="checkbox" id="hotkey_ctrl"> Ctrl</label>
+                <label class="checkbox-label"><input type="checkbox" id="hotkey_alt"> Alt</label>
+                <label class="checkbox-label"><input type="checkbox" id="hotkey_shift"> Shift</label>
+                <label class="checkbox-label"><input type="checkbox" id="hotkey_win"> Win</label>
+                <span style="color: var(--border-color)">+</span>
+                <select id="hotkey_key">
+                    <!-- A-Z keys -->
+                    <option value="A">A</option><option value="B">B</option><option value="C" selected>C</option>
+                    <option value="D">D</option><option value="E">E</option><option value="F">F</option>
+                    <option value="G">G</option><option value="H">H</option><option value="I">I</option>
+                    <option value="J">J</option><option value="K">K</option><option value="L">L</option>
+                    <option value="M">M</option><option value="N">N</option><option value="O">O</option>
+                    <option value="P">P</option><option value="Q">Q</option><option value="R">R</option>
+                    <option value="S">S</option><option value="T">T</option><option value="U">U</option>
+                    <option value="V">V</option><option value="W">W</option><option value="X">X</option>
+                    <option value="Y">Y</option><option value="Z">Z</option>
+                    <!-- Numbers -->
+                    <option value="0">0</option><option value="1">1</option><option value="2">2</option>
+                    <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                    <option value="6">6</option><option value="7">7</option><option value="8">8</option>
+                    <option value="9">9</option>
+                    <!-- F Keys -->
+                    <option value="F1">F1</option><option value="F2">F2</option><option value="F3">F3</option>
+                    <option value="F4">F4</option><option value="F5">F5</option><option value="F6">F6</option>
+                    <option value="F7">F7</option><option value="F8">F8</option><option value="F9">F9</option>
+                    <option value="F10">F10</option><option value="F11">F11</option><option value="F12">F12</option>
+                    <!-- Other keys -->
+                    <option value="SPACE">SPACE</option>
+                    <option value="INSERT">INSERT</option>
+                    <option value="DELETE">DELETE</option>
+                    <option value="HOME">HOME</option>
+                    <option value="END">END</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Autostart -->
+        <div class="switch-row">
+            <span class="switch-label">Запуск при старте Windows</span>
+            <label class="switch">
+                <input type="checkbox" id="autostart">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <!-- Right: Preview and Actions -->
+    <div class="preview-panel">
+        <div class="status-badge">
+            <div class="status-dot" id="status-dot"></div>
+            <span id="status-text">Прицел активен</span>
+        </div>
+
+        <div class="preview-title">Предпросмотр</div>
+        <div class="preview-box">
+            <svg id="preview-svg" viewBox="0 0 200 200">
+                <!-- Grid helper lines (optional, transparent) -->
+                <!-- Crosshair lines -->
+                <line id="prev-left" x1="0" y1="100" x2="0" y2="100" stroke="#00ffff" stroke-width="2"/>
+                <line id="prev-right" x1="0" y1="100" x2="0" y2="100" stroke="#00ffff" stroke-width="2"/>
+                <line id="prev-top" x1="100" y1="0" x2="100" y2="0" stroke="#00ffff" stroke-width="2"/>
+                <line id="prev-bottom" x1="100" y1="0" x2="100" y2="0" stroke="#00ffff" stroke-width="2"/>
+                <circle id="prev-dot" cx="100" cy="100" r="0" fill="#00ffff"/>
+            </svg>
+        </div>
+
+        <button class="btn" id="toggle-btn">Включить / Выключить</button>
+        <button class="btn btn-exit" id="exit-btn">Закрыть Приложение</button>
+    </div>
+</div>
+
+<script>
+    // State management
+    let settings = {
+        enabled: true,
+        color: "#00ffff",
+        line_width: 2,
+        line_length: 8,
+        gap: 4,
+        dot_enabled: false,
+        dot_size: 3,
+        hotkey_ctrl: true,
+        hotkey_alt: true,
+        hotkey_shift: false,
+        hotkey_win: false,
+        hotkey_key: "C",
+        autostart: false,
+        offset_x: 0,
+        offset_y: 0
+    };
+
+    // DOM Elements
+    const elements = {
+        color: document.getElementById('color'),
+        colorVal: document.getElementById('color-val'),
+        lineWidth: document.getElementById('line_width'),
+        lineWidthVal: document.getElementById('line_width-val'),
+        lineLength: document.getElementById('line_length'),
+        lineLengthVal: document.getElementById('line_length-val'),
+        gap: document.getElementById('gap'),
+        gapVal: document.getElementById('gap-val'),
+        offsetX: document.getElementById('offset_x'),
+        offsetXVal: document.getElementById('offset_x-val'),
+        offsetY: document.getElementById('offset_y'),
+        offsetYVal: document.getElementById('offset_y-val'),
+        dotEnabled: document.getElementById('dot_enabled'),
+        dotSize: document.getElementById('dot_size'),
+        dotSizeVal: document.getElementById('dot_size-val'),
+        dotSizeContainer: document.getElementById('dot-size-container'),
+        hotkeyCtrl: document.getElementById('hotkey_ctrl'),
+        hotkeyAlt: document.getElementById('hotkey_alt'),
+        hotkeyShift: document.getElementById('hotkey_shift'),
+        hotkeyWin: document.getElementById('hotkey_win'),
+        hotkeyKey: document.getElementById('hotkey_key'),
+        autostart: document.getElementById('autostart'),
+        
+        statusDot: document.getElementById('status-dot'),
+        statusText: document.getElementById('status-text'),
+        toggleBtn: document.getElementById('toggle-btn'),
+        exitBtn: document.getElementById('exit-btn'),
+
+        // SVG lines
+        prevLeft: document.getElementById('prev-left'),
+        prevRight: document.getElementById('prev-right'),
+        prevTop: document.getElementById('prev-top'),
+        prevBottom: document.getElementById('prev-bottom'),
+        prevDot: document.getElementById('prev-dot'),
+    };
+
+    // Load initial settings from server
+    async function loadSettings() {
+        try {
+            const res = await fetch('/api/settings');
+            if (res.ok) {
+                settings = await res.json();
+                updateUI();
+            }
+        } catch (e) {
+            console.error("Failed to load settings:", e);
+        }
+    }
+
+    // Sync settings to server
+    async function saveSettings() {
+        try {
+            await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(settings)
+            });
+        } catch (e) {
+            console.error("Failed to save settings:", e);
+        }
+    }
+
+    // Update UI elements based on state object
+    function updateUI() {
+        // Inputs
+        elements.color.value = settings.color;
+        elements.colorVal.innerText = settings.color.toUpperCase();
+        
+        elements.lineWidth.value = settings.line_width;
+        elements.lineWidthVal.innerText = settings.line_width + ' px';
+
+        elements.lineLength.value = settings.line_length;
+        elements.lineLengthVal.innerText = settings.line_length + ' px';
+
+        elements.gap.value = settings.gap;
+        elements.gapVal.innerText = settings.gap + ' px';
+
+        elements.offsetX.value = settings.offset_x;
+        elements.offsetXVal.innerText = settings.offset_x + ' px';
+
+        elements.offsetY.value = settings.offset_y;
+        elements.offsetYVal.innerText = settings.offset_y + ' px';
+
+        elements.dotEnabled.checked = settings.dot_enabled;
+        elements.dotSize.value = settings.dot_size;
+        elements.dotSizeVal.innerText = settings.dot_size + ' px';
+        elements.dotSizeContainer.style.display = settings.dot_enabled ? 'flex' : 'none';
+
+        elements.hotkeyCtrl.checked = settings.hotkey_ctrl;
+        elements.hotkeyAlt.checked = settings.hotkey_alt;
+        elements.hotkeyShift.checked = settings.hotkey_shift;
+        elements.hotkeyWin.checked = settings.hotkey_win;
+        elements.hotkeyKey.value = settings.hotkey_key;
+
+        elements.autostart.checked = settings.autostart;
+
+        // Color active preset
+        document.querySelectorAll('.preset-color').forEach(p => {
+            if (p.getAttribute('data-color').toLowerCase() === settings.color.toLowerCase()) {
+                p.classList.add('active');
+            } else {
+                p.classList.remove('active');
+            }
+        });
+
+        // Status
+        if (settings.enabled) {
+            elements.statusDot.classList.remove('disabled');
+            elements.statusText.innerText = "Прицел активен";
+            elements.statusText.style.color = "#4cd964";
+        } else {
+            elements.statusDot.classList.add('disabled');
+            elements.statusText.innerText = "Прицел отключен";
+            elements.statusText.style.color = "#ff3b30";
+        }
+
+        // Draw preview crosshair
+        updatePreview();
+    }
+
+    // Update SVG preview
+    fn = 100; // SVG Center
+    function updatePreview() {
+        const color = settings.color;
+        const width = settings.line_width;
+        const len = settings.line_length;
+        const gap = settings.gap;
+
+        // Position offset does not render in preview center, keeping preview centered
+        const cx = 100;
+        const cy = 100;
+
+        // Left line
+        elements.prevLeft.setAttribute('x1', cx - gap - len);
+        elements.prevLeft.setAttribute('x2', cx - gap);
+        elements.prevLeft.setAttribute('y1', cy);
+        elements.prevLeft.setAttribute('y2', cy);
+        elements.prevLeft.setAttribute('stroke', color);
+        elements.prevLeft.setAttribute('stroke-width', width);
+
+        // Right line
+        elements.prevRight.setAttribute('x1', cx + gap);
+        elements.prevRight.setAttribute('x2', cx + gap + len);
+        elements.prevRight.setAttribute('y1', cy);
+        elements.prevRight.setAttribute('y2', cy);
+        elements.prevRight.setAttribute('stroke', color);
+        elements.prevRight.setAttribute('stroke-width', width);
+
+        // Top line
+        elements.prevTop.setAttribute('x1', cx);
+        elements.prevTop.setAttribute('x2', cx);
+        elements.prevTop.setAttribute('y1', cy - gap - len);
+        elements.prevTop.setAttribute('y2', cy - gap);
+        elements.prevTop.setAttribute('stroke', color);
+        elements.prevTop.setAttribute('stroke-width', width);
+
+        // Bottom line
+        elements.prevBottom.setAttribute('x1', cx);
+        elements.prevBottom.setAttribute('x2', cx);
+        elements.prevBottom.setAttribute('y1', cy + gap);
+        elements.prevBottom.setAttribute('y2', cy + gap + len);
+        elements.prevBottom.setAttribute('stroke', color);
+        elements.prevBottom.setAttribute('stroke-width', width);
+
+        // Center dot
+        if (settings.dot_enabled) {
+            elements.prevDot.setAttribute('cx', cx);
+            elements.prevDot.setAttribute('cy', cy);
+            elements.prevDot.setAttribute('r', settings.dot_size / 2);
+            elements.prevDot.setAttribute('fill', color);
+            elements.prevDot.style.display = 'block';
+        } else {
+            elements.prevDot.style.display = 'none';
+        }
+    }
+
+    // Attach event listeners for live updates
+    function attachListeners() {
+        // Range inputs live update
+        const sliders = ['line_width', 'line_length', 'gap', 'offset_x', 'offset_y', 'dot_size'];
+        sliders.forEach(key => {
+            const input = document.getElementById(key);
+            input.addEventListener('input', (e) => {
+                settings[key] = parseInt(e.target.value);
+                updateUI();
+                saveSettings(); // Send settings immediately on drag
+            });
+        });
+
+        // Color Picker
+        elements.color.addEventListener('input', (e) => {
+            settings.color = e.target.value;
+            updateUI();
+            saveSettings();
+        });
+
+        // Preset Colors
+        document.querySelectorAll('.preset-color').forEach(preset => {
+            preset.addEventListener('click', (e) => {
+                settings.color = e.target.getAttribute('data-color');
+                updateUI();
+                saveSettings();
+            });
+        });
+
+        // Checkboxes & Dropdowns
+        const checkboxes = ['dot_enabled', 'hotkey_ctrl', 'hotkey_alt', 'hotkey_shift', 'hotkey_win', 'autostart'];
+        checkboxes.forEach(key => {
+            const input = document.getElementById(key);
+            input.addEventListener('change', (e) => {
+                settings[key] = e.target.checked;
+                updateUI();
+                saveSettings();
+            });
+        });
+
+        elements.hotkeyKey.addEventListener('change', (e) => {
+            settings.hotkey_key = e.target.value;
+            updateUI();
+            saveSettings();
+        });
+
+        // Toggle visibility button
+        elements.toggleBtn.addEventListener('click', async () => {
+            try {
+                const res = await fetch('/api/toggle', { method: 'POST' });
+                if (res.ok) {
+                    const data = await res.json();
+                    settings.enabled = data.enabled;
+                    updateUI();
+                }
+            } catch (e) {
+                console.error("Failed to toggle crosshair:", e);
+            }
+        });
+
+        // Exit Application button
+        elements.exitBtn.addEventListener('click', async () => {
+            if (confirm("Вы действительно хотите полностью закрыть приложение? Прицел исчезнет.")) {
+                try {
+                    await fetch('/api/exit', { method: 'POST' });
+                    document.body.innerHTML = `
+                        <div style="text-align: center; max-width: 500px; padding: 40px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5)">
+                            <h2 style="color: #ff3b30; margin-bottom: 15px;">Приложение закрыто</h2>
+                            <p style="color: var(--text-color);">Процесс приложения прицела был успешно остановлен. Веб-интерфейс больше недоступен. Вы можете закрыть эту вкладку.</p>
+                        </div>
+                    `;
+                } catch (e) {
+                    console.error("Failed to exit application:", e);
+                }
+            }
+        });
+    }
+
+    // Initialize
+    loadSettings().then(() => {
+        attachListeners();
+    });
+</script>
+
+</body>
+</html>
