@@ -447,9 +447,34 @@
             background-color: #ff3b30;
             box-shadow: 0 0 6px #ff3b30;
         }
+
+        /* Toast notification style */
+        .toast {
+            position: fixed;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 240, 255, 0.95);
+            color: #000000;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            box-shadow: 0 8px 30px rgba(0, 240, 255, 0.4);
+            z-index: 9999;
+            transition: top 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .toast.show {
+            top: 24px;
+        }
     </style>
 </head>
 <body>
+<div id="toast" class="toast">Код скопирован!</div>
 
 <div class="container">
     <h1>Настройка Прицела</h1>
@@ -667,6 +692,16 @@
         draw_top: true,
         draw_bottom: true
     };
+
+    // Slide-down toast notification helper
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.innerText = message;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 1500);
+    }
 
     // DOM Elements
     const elements = {
@@ -976,15 +1011,7 @@
         elements.copyCodeBtn.addEventListener('click', () => {
             elements.shareCode.select();
             document.execCommand('copy');
-            const originalText = elements.copyCodeBtn.innerText;
-            elements.copyCodeBtn.innerText = 'Скопировано!';
-            elements.copyCodeBtn.style.borderColor = '#4cd964';
-            elements.copyCodeBtn.style.color = '#4cd964';
-            setTimeout(() => {
-                elements.copyCodeBtn.innerText = originalText;
-                elements.copyCodeBtn.style.borderColor = '';
-                elements.copyCodeBtn.style.color = '';
-            }, 1500);
+            showToast("Код обмена скопирован!");
         });
 
         // Import share code
@@ -1156,14 +1183,7 @@
             // Copy code on clicking the code string
             item.querySelector('.preset-code-text').addEventListener('click', () => {
                 navigator.clipboard.writeText(preset.code);
-                const originalText = preset.name;
-                const nameEl = item.querySelector('div > div:first-child');
-                nameEl.innerText = 'Код скопирован!';
-                nameEl.style.color = '#4cd964';
-                setTimeout(() => {
-                    nameEl.innerText = originalText;
-                    nameEl.style.color = '';
-                }, 1000);
+                showToast("Код прицела скопирован!");
             });
 
             // Apply preset
