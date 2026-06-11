@@ -25,6 +25,11 @@ pub struct Settings {
     pub autostart: bool,
     pub offset_x: i32,
     pub offset_y: i32,
+    pub outline_enabled: bool,
+    pub draw_left: bool,
+    pub draw_right: bool,
+    pub draw_top: bool,
+    pub draw_bottom: bool,
 }
 
 impl Default for Settings {
@@ -45,6 +50,11 @@ impl Default for Settings {
             autostart: false,
             offset_x: 0,
             offset_y: 0,
+            outline_enabled: false,
+            draw_left: true,
+            draw_right: true,
+            draw_top: true,
+            draw_bottom: true,
         }
     }
 }

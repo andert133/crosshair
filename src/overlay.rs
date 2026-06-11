@@ -284,6 +284,7 @@ unsafe extern "system" fn overlay_wnd_proc(
             if settings.enabled {
                 let color_val = parse_hex_color(&settings.color);
                 let brush = CreateSolidBrush(color_val);
+                let outline_brush = CreateSolidBrush(0x00000000); // Black outline brush
 
                 let cx = (rect.right - rect.left) / 2;
                 let cy = (rect.bottom - rect.top) / 2;
@@ -297,40 +298,84 @@ unsafe extern "system" fn overlay_wnd_proc(
                 let hl_bottom = hl_top + line_width;
 
                 // Horizontal Left
-                let rect_left = RECT {
-                    left: vl_left - gap - len + 1,
-                    top: hl_top,
-                    right: vl_left - gap + 1,
-                    bottom: hl_bottom,
-                };
-                FillRect(hdc, &rect_left, brush);
+                if settings.draw_left {
+                    let rect_left = RECT {
+                        left: vl_left - gap - len + 1,
+                        top: hl_top,
+                        right: vl_left - gap + 1,
+                        bottom: hl_bottom,
+                    };
+                    if settings.outline_enabled {
+                        let out_rect = RECT {
+                            left: rect_left.left - 1,
+                            top: rect_left.top - 1,
+                            right: rect_left.right + 1,
+                            bottom: rect_left.bottom + 1,
+                        };
+                        FillRect(hdc, &out_rect, outline_brush);
+                    }
+                    FillRect(hdc, &rect_left, brush);
+                }
 
                 // Horizontal Right
-                let rect_right = RECT {
-                    left: vl_right + gap - 1,
-                    top: hl_top,
-                    right: vl_right + gap - 1 + len,
-                    bottom: hl_bottom,
-                };
-                FillRect(hdc, &rect_right, brush);
+                if settings.draw_right {
+                    let rect_right = RECT {
+                        left: vl_right + gap - 1,
+                        top: hl_top,
+                        right: vl_right + gap - 1 + len,
+                        bottom: hl_bottom,
+                    };
+                    if settings.outline_enabled {
+                        let out_rect = RECT {
+                            left: rect_right.left - 1,
+                            top: rect_right.top - 1,
+                            right: rect_right.right + 1,
+                            bottom: rect_right.bottom + 1,
+                        };
+                        FillRect(hdc, &out_rect, outline_brush);
+                    }
+                    FillRect(hdc, &rect_right, brush);
+                }
 
                 // Vertical Top
-                let rect_top = RECT {
-                    left: vl_left,
-                    top: hl_top - gap - len + 1,
-                    right: vl_right,
-                    bottom: hl_top - gap + 1,
-                };
-                FillRect(hdc, &rect_top, brush);
+                if settings.draw_top {
+                    let rect_top = RECT {
+                        left: vl_left,
+                        top: hl_top - gap - len + 1,
+                        right: vl_right,
+                        bottom: hl_top - gap + 1,
+                    };
+                    if settings.outline_enabled {
+                        let out_rect = RECT {
+                            left: rect_top.left - 1,
+                            top: rect_top.top - 1,
+                            right: rect_top.right + 1,
+                            bottom: rect_top.bottom + 1,
+                        };
+                        FillRect(hdc, &out_rect, outline_brush);
+                    }
+                    FillRect(hdc, &rect_top, brush);
+                }
 
                 // Vertical Bottom
-                let rect_bottom = RECT {
-                    left: vl_left,
-                    top: hl_bottom + gap - 1,
-                    right: vl_right,
-                    bottom: hl_bottom + gap - 1 + len,
-                };
-                FillRect(hdc, &rect_bottom, brush);
+                if settings.draw_bottom {
+                    let rect_bottom = RECT {
+                        left: vl_left,
+                        top: hl_bottom + gap - 1,
+                        right: vl_right,
+                        bottom: hl_bottom + gap - 1 + len,
+                    };
+                    if settings.outline_enabled {
+                        let out_rect = RECT {
+                            left: rect_bottom.left - 1,
+                            top: rect_bottom.top - 1,
+                            right: rect_bottom.right + 1,
+                            bottom: rect_bottom.bottom + 1,
+                        };
+                        FillRect(hdc, &out_rect, outline_brush);
+                    }
+                    FillRect(hdc, &rect_bottom, brush);
+                }
 
                 if settings.dot_enabled && settings.dot_size > 0 {
                     let dot_size = settings.dot_size;
@@ -340,10 +385,20 @@ unsafe extern "system" fn overlay_wnd_proc(
                         right: cx - (dot_size / 2) + dot_size,
                         bottom: cy - (dot_size / 2) + dot_size,
                     };
+                    if settings.outline_enabled {
+                        let out_rect = RECT {
+                            left: rect_dot.left - 1,
+                            top: rect_dot.top - 1,
+                            right: rect_dot.right + 1,
+                            bottom: rect_dot.bottom + 1,
+                        };
+                        FillRect(hdc, &out_rect, outline_brush);
+                    }
                     FillRect(hdc, &rect_dot, brush);
                 }
 
                 DeleteObject(brush);
+                DeleteObject(outline_brush);
             }
 
             EndPaint(hwnd, &ps);
