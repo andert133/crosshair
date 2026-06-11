@@ -25,11 +25,20 @@ pub struct Settings {
     pub autostart: bool,
     pub offset_x: i32,
     pub offset_y: i32,
+    #[serde(default)]
     pub outline_enabled: bool,
+    #[serde(default = "default_draw_line")]
     pub draw_left: bool,
+    #[serde(default = "default_draw_line")]
     pub draw_right: bool,
+    #[serde(default = "default_draw_line")]
     pub draw_top: bool,
+    #[serde(default = "default_draw_line")]
     pub draw_bottom: bool,
+}
+
+fn default_draw_line() -> bool {
+    true
 }
 
 impl Default for Settings {
