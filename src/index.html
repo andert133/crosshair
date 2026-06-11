@@ -741,6 +741,7 @@
         statusText: document.getElementById('status-text'),
         toggleBtn: document.getElementById('toggle-btn'),
         exitBtn: document.getElementById('exit-btn'),
+        previewSvg: document.getElementById('preview-svg'),
     };
 
     // Hex encoding of the settings (10-byte hex string)
@@ -909,6 +910,15 @@
 
         // Draw preview crosshair
         updatePreview();
+        adjustPreviewScale();
+    }
+
+    // Shrink preview SVG based on system DPI ratio to match physical screen crosshair size
+    function adjustPreviewScale() {
+        const ratio = window.devicePixelRatio || 1;
+        const size = 200 / ratio;
+        elements.previewSvg.style.width = size + 'px';
+        elements.previewSvg.style.height = size + 'px';
     }
 
     // Update SVG preview dynamically matching GDI calculations exactly
