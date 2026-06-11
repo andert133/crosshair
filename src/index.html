@@ -37,9 +37,9 @@
 
         .container {
             width: 100%;
-            max-width: 900px;
+            max-width: 1220px;
             display: grid;
-            grid-template-columns: 1.2fr 0.8fr;
+            grid-template-columns: 1.2fr 0.8fr 1.1fr;
             gap: 25px;
             background: var(--card-bg);
             backdrop-filter: blur(12px);
@@ -49,10 +49,67 @@
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 240, 255, 0.05);
         }
 
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1.2fr 0.8fr;
+                max-width: 900px;
+            }
+            .presets-panel {
+                grid-column: 1 / -1;
+            }
+        }
+
         @media (max-width: 768px) {
             .container {
                 grid-template-columns: 1fr;
             }
+            .presets-panel {
+                grid-column: auto;
+            }
+        }
+
+        /* Scrollbar styles for presets list */
+        #presets-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        #presets-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #presets-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+        #presets-list::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-color);
+        }
+
+        /* Action buttons in preset items */
+        .action-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .action-btn.apply {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+        .action-btn.apply:hover {
+            background: var(--accent-color);
+            color: #000;
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+        .action-btn.delete {
+            border-color: #ff3b30;
+            color: #ff3b30;
+        }
+        .action-btn.delete:hover {
+            background: #ff3b30;
+            color: #fff;
+            box-shadow: 0 0 8px rgba(255, 59, 48, 0.4);
         }
 
         h1 {
@@ -565,6 +622,25 @@
         <button class="btn" id="toggle-btn">Включить / Выключить</button>
         <button class="btn btn-exit" id="exit-btn">Закрыть Приложение</button>
     </div>
+
+    <!-- Right-most: User Presets Panel -->
+    <div class="presets-panel" style="display: flex; flex-direction: column; gap: 20px; background: rgba(0, 0, 0, 0.25); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px;">
+        <div class="preview-title" style="text-align: center;">Мои Прицелы</div>
+        
+        <!-- Save Preset Form -->
+        <div class="control-group" style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+            <div class="control-label" style="font-size: 11px;">Сохранить текущий прицел</div>
+            <div style="display: flex; gap: 8px; margin-top: 5px;">
+                <input type="text" id="new-preset-name" placeholder="Название прицела..." style="flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-highlight); padding: 8px 12px; font-size: 13px; outline: none;">
+                <button class="btn" id="save-preset-btn" style="width: auto; margin-top: 0; padding: 8px 14px; font-size: 11px; border-color: var(--accent-color); color: var(--accent-color);">Сохранить</button>
+            </div>
+        </div>
+        
+        <!-- Presets List -->
+        <div id="presets-list" style="display: flex; flex-direction: column; gap: 12px; max-height: 380px; overflow-y: auto; padding-right: 5px;">
+            <!-- Preset items will be generated here -->
+        </div>
+    </div>
 </div>
 
 <script>
@@ -959,11 +1035,161 @@
                 }
             }
         });
+        // Save current preset
+        document.getElementById('save-preset-btn').addEventListener('click', () => {
+            const nameInput = document.getElementById('new-preset-name');
+            const name = nameInput.value.trim();
+            if (!name) {
+                alert('Пожалуйста, введите название прицела.');
+                return;
+            }
+            const code = encodeSettings(settings);
+            userPresets.push({ name, code });
+            saveUserPresets();
+            renderPresetsList();
+            nameInput.value = '';
+        });
+    }
+
+    // User presets array
+    let userPresets = [];
+
+    // Load presets from localStorage
+    function loadUserPresets() {
+        const stored = localStorage.getItem('user_presets');
+        if (stored) {
+            try {
+                userPresets = JSON.parse(stored);
+            } catch (e) {
+                userPresets = [];
+            }
+        } else {
+            // Default presets on first run
+            userPresets = [
+                { name: "Точка (Голубой)", code: "00ffff0401006464037d" },
+                { name: "Крестик (Зеленый)", code: "00ff0002080464640379" },
+                { name: "T-образный (Желтый)", code: "ffff0002060364640371" },
+                { name: "Круг (Розовый)", code: "ff00ff02030564640679" },
+                { name: "Снайпер (Красный)", code: "ff00000101006464087f" }
+            ];
+            saveUserPresets();
+        }
+        renderPresetsList();
+    }
+
+    function saveUserPresets() {
+        localStorage.setItem('user_presets', JSON.stringify(userPresets));
+    }
+
+    // Render presets list with mini previews
+    function renderPresetsList() {
+        const listContainer = document.getElementById('presets-list');
+        listContainer.innerHTML = '';
+
+        userPresets.forEach((preset, index) => {
+            const decoded = decodeSettings(preset.code);
+            if (!decoded) return;
+
+            const cx = 100;
+            const cy = 100;
+            const color = decoded.color;
+            const width = decoded.line_width;
+            const len = decoded.line_length;
+            const gap = decoded.gap;
+
+            let svgContent = '';
+
+            function makeMiniLine(x1, y1, x2, y2) {
+                let out = '';
+                if (decoded.outline_enabled) {
+                    out += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#000000" stroke-width="${width + 2}" stroke-linecap="square"/>`;
+                }
+                out += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${width}" stroke-linecap="square"/>`;
+                return out;
+            }
+
+            if (decoded.draw_left) {
+                svgContent += makeMiniLine(cx - gap - len, cy, cx - gap, cy);
+            }
+            if (decoded.draw_right) {
+                svgContent += makeMiniLine(cx + gap, cy, cx + gap + len, cy);
+            }
+            if (decoded.draw_top) {
+                svgContent += makeMiniLine(cx, cy - gap - len, cx, cy - gap);
+            }
+            if (decoded.draw_bottom) {
+                svgContent += makeMiniLine(cx, cy + gap, cx, cy + gap + len);
+            }
+
+            if (decoded.dot_enabled && decoded.dot_size > 0) {
+                const ds = decoded.dot_size;
+                if (decoded.outline_enabled) {
+                    svgContent += `<rect x="${cx - ds/2 - 1}" y="${cy - ds/2 - 1}" width="${ds + 2}" height="${ds + 2}" fill="#000000"/>`;
+                }
+                svgContent += `<rect x="${cx - ds/2}" y="${cy - ds/2}" width="${ds}" height="${ds}" fill="${color}"/>`;
+            }
+
+            const item = document.createElement('div');
+            item.className = 'preset-item';
+            item.style.cssText = 'display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; transition: background 0.2s;';
+            item.innerHTML = `
+                <!-- Mini Preview -->
+                <div style="width: 44px; height: 44px; background: #121214; border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; display: flex; justify-content: center; align-items: center; overflow: hidden; flex-shrink: 0;">
+                    <svg viewBox="0 0 200 200" style="width: 100%; height: 100%;">
+                        ${svgContent}
+                    </svg>
+                </div>
+                
+                <!-- Text Info -->
+                <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                    <div style="font-size: 13px; font-weight: bold; color: var(--text-highlight); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${preset.name}</div>
+                    <div style="font-size: 10px; font-family: monospace; color: rgba(0, 240, 255, 0.6); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer;" class="preset-code-text" title="Кликните, чтобы скопировать код">${preset.code}</div>
+                </div>
+                
+                <!-- Actions -->
+                <div style="display: flex; gap: 6px;">
+                    <button class="action-btn apply" data-index="${index}" title="Применить" style="width: 26px; height: 26px; border-radius: 4px; font-size: 12px;">✓</button>
+                    <button class="action-btn delete" data-index="${index}" title="Удалить" style="width: 26px; height: 26px; border-radius: 4px; font-size: 12px;">×</button>
+                </div>
+            `;
+
+            // Copy code on clicking the code string
+            item.querySelector('.preset-code-text').addEventListener('click', () => {
+                navigator.clipboard.writeText(preset.code);
+                const originalText = preset.name;
+                const nameEl = item.querySelector('div > div:first-child');
+                nameEl.innerText = 'Код скопирован!';
+                nameEl.style.color = '#4cd964';
+                setTimeout(() => {
+                    nameEl.innerText = originalText;
+                    nameEl.style.color = '';
+                }, 1000);
+            });
+
+            // Apply preset
+            item.querySelector('.action-btn.apply').addEventListener('click', () => {
+                Object.assign(settings, decoded);
+                updateUI();
+                saveSettings();
+            });
+
+            // Delete preset
+            item.querySelector('.action-btn.delete').addEventListener('click', () => {
+                if (confirm(`Удалить прицел "${preset.name}"?`)) {
+                    userPresets.splice(index, 1);
+                    saveUserPresets();
+                    renderPresetsList();
+                }
+            });
+
+            listContainer.appendChild(item);
+        });
     }
 
     // Initialize
     loadSettings().then(() => {
         attachListeners();
+        loadUserPresets();
     });
 </script>
 
